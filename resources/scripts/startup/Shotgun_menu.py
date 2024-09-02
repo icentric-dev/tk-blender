@@ -60,12 +60,28 @@ PYSIDE2_MISSING_MESSAGE = (
     + "-" * 80
 )
 
+PYSIDE6_IMPORTED = False
 try:
     from PySide2 import QtWidgets, QtCore
 
     PYSIDE2_IMPORTED = True
 except ModuleNotFoundError:
-    PYSIDE2_IMPORTED = False
+    try:
+        if sys.platform == "win32":
+            # avoid loading QtWebEngine on Windows!
+            import PySide6
+            class QtWebEngineCore:
+                QWebEnginePage = None
+                QWebEngineProfile = None
+            PySide6.QtWebEngineCore = QtWebEngineCore
+            PySide6.QtWebEngineWidgets = None
+        
+        from PySide6 import QtWidgets, QtCore
+        
+        PYSIDE2_IMPORTED = True
+        PYSIDE6_IMPORTED = True
+    except ModuleNotFoundError:
+        PYSIDE2_IMPORTED = False
 
 
 class ShotgunConsoleLog(bpy.types.Operator):
@@ -251,6 +267,44 @@ def boostrap():
 
     engine_startup_path = os.environ.get("SGTK_BLENDER_ENGINE_STARTUP")
     engine_startup = imp.load_source("sgtk_blender_engine_startup", engine_startup_path)
+    
+    if PYSIDE6_IMPORTED and sys.platform == "win32":
+        # avoid loading QtWebEngine on Windows!
+        def _import_pyside6(self):
+            """
+            Import PySide6.
+            HACK - do not import QtWebEngine* in Windows!!!
+
+            :returns: The (binding name, binding version, modules) tuple.
+            """
+
+            import PySide6
+            import pkgutil
+
+            sub_modules = pkgutil.iter_modules(PySide6.__path__)
+            modules_dict = {}
+            for module in sub_modules:
+                module_name = module.name
+                if "QtWebEngine" in module_name:
+                    continue
+                try:
+                    wrapper = __import__("PySide6", globals(), locals(), [module_name])
+                    if hasattr(wrapper, module_name):
+                        modules_dict[module_name] = getattr(wrapper, module_name)
+                except Exception as e:
+                    logger.debug("'%s' was skipped: %s", module_name, e)
+                    pass
+
+            return (
+                PySide6.__name__,
+                PySide6.__version__,
+                PySide6,
+                modules_dict,
+                self._to_version_tuple(PySide6.__version__),
+            )
+        
+        from tank.util.qt_importer import QtImporter
+        QtImporter._import_pyside6 = _import_pyside6
 
     # Fire up Toolkit and the environment engine.
     engine_startup.start_toolkit()
