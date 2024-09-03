@@ -29,5 +29,5 @@
 # https://github.com/diegogarciahuerta/tk-blender/releases/
 engines.tk-blender.location:
   type: git
-  path: https://github.com/diegogarciahuerta/tk-blender
-  version: v1.1.1
+  path: https://github.com/icentric-dev/tk-blender.git
+  version: v2.0.0
