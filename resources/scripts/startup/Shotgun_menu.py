@@ -158,7 +158,7 @@ class TOPBAR_MT_shotgun(Menu):
     Creates the Shotgun top level menu
     """
 
-    bl_label = "Shotgun"
+    bl_label = "FPTR"
     bl_idname = "TOPBAR_MT_shotgun"
 
     def draw(self, context):
