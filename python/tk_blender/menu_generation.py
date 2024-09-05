@@ -204,7 +204,7 @@ class MenuGenerator(object):
 
         self._add_divider(ctx_menu)
 
-        self._add_menu_item("Jump to Shotgun", ctx_menu, self._jump_to_sg)
+        self._add_menu_item("Jump to Flow Production Tracking", ctx_menu, self._jump_to_sg)
 
         # Add the menu item only when there are some file system locations.
         if ctx.filesystem_locations:
